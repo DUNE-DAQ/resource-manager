@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resource_manager"
+description = "A resource management microservice for a distributed DAQ system"
+version = "0.0.0"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "django",
+    "gunicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "ruff",
+    "pytest",
+    "pytest-cov",
+]
+
+[project.scripts]
+resource_manager_manage = "manage:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# * See https://docs.astral.sh/ruff/rules/ for details on Ruff's linting options
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # check for errors using PyFlakes
+    "I",    # best practices for import calls
+    "UP",   # suggestions for code modernization
+    "RUF",  # build in Ruff warnings
+    "R",    # refactoring suggestions
+]
