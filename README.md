@@ -4,13 +4,18 @@ At any point once the server is started, see a summary of resource allocations b
 pointing a web browser at `http://127.0.0.1:8000/`.
 
 ```bash
-# Set up a django env.
+# Set up a Python environment.
 python -m venv .venv
 . .venv/bin/activate
 pip install -U pip
-pip install django==5.2
 
-# Set up the local SQLite DB.
+# Either requirements.txt for production:
+pip install -r requirements.txt
+
+# Or requirements-dev.txt for devopment:
+pip install -r requirements-dev.txt
+
+# Set up the configured database.
 python manage.py makemigrations
 python manage.py migrate
 
