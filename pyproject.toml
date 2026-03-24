@@ -1,10 +1,34 @@
-# * See https://docs.astral.sh/ruff/rules/ for details on Ruff's linting options
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = ["*/migrations"]
+
 [tool.ruff.lint]
 select = [
-    "E",    # pycodestyle errors
-    "F",    # check for errors using PyFlakes
-    "I",    # best practices for import calls
-    "UP",   # suggestions for code modernization
-    "RUF",  # build in Ruff warnings
-    "R",    # refactoring suggestions
+    "D",    # pydocstyle
+    "E",    # pycodestyle
+    "F",    # Pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "RUF",  # ruff
 ]
+pydocstyle.convention = "google"
+
+[tool.djlint]
+profile = "django"
+indent = 2
+
+[tool.django-stubs]
+django_settings_module = "resource_manager.settings"
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+
+[tool.pytest.ini_options]
+addopts = "-v --mypy --cov=. --cov-report=html --doctest-modules"
+DJANGO_SETTINGS_MODULE = "resource_manager.settings"
+FAIL_INVALID_TEMPLATE_VARS = true
+
+[tool.coverage.run]
+omit = ["manage.py", "resource_manager/*", "tests/*"]
