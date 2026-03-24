@@ -1,8 +1,6 @@
-
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-exclude = ["*/migrations"]
 
 [tool.ruff.lint]
 select = [
@@ -26,7 +24,7 @@ django_settings_module = "resource_manager.settings"
 plugins = ["mypy_django_plugin.main"]
 
 [tool.pytest.ini_options]
-addopts = "-v --mypy --cov=. --cov-report=html --doctest-modules"
+addopts = "-v --mypy --cov=. --cov-report=html"
 DJANGO_SETTINGS_MODULE = "resource_manager.settings"
 FAIL_INVALID_TEMPLATE_VARS = true
 
