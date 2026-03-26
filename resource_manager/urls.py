@@ -13,6 +13,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("", include("main.urls")),
-    path("api/", include(f"main.urls_api_{API_VERSION}")),
-    path(f"api/{API_VERSION}/", include(f"main.urls_api_{API_VERSION}")),
+    path("api/", include(f"main.api.{API_VERSION}.urls")),
+    path(f"api/{API_VERSION}/", include(f"main.api.{API_VERSION}.urls")),
 ]
