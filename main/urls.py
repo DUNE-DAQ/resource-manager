@@ -1,6 +1,8 @@
+"""URL configuration for the main resource manager app."""
+
 from django.urls import path
 
-from .views import add_resource, query_resource, take_resource, release_resource, index
+from .views import add_resource, index, query_resource, release_resource, take_resource
 
 urlpatterns = [
     path("", index, name="index"),
