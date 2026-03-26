@@ -1,4 +1,13 @@
-# TLDR Setup
+# DUNE-DAQ Resource Manager
+
+This package provides a web app and API for interacting with abstract 'resource' objects
+in a multi-user software environment. The frontend stack is Django, however any backend
+WSGI/ASGI server and database may be configured. When ran in development mode using the
+`manage.py` script, a simple development server and SQLite database is instantiated.
+
+Follow the instructions below to quickly set up sych a development instance.
+
+## TLDR Setup
 
 At any point once the server is started, see a summary of resource allocations by
 pointing a web browser at `http://127.0.0.1:8000/`.
@@ -20,7 +29,11 @@ python manage.py migrate
 
 # Start a local test server.
 python manage.py runserver
+```
 
+Interact with the API using a HTTP client capable of the `POST` method, such as `curl`.
+
+```bash
 # Add some resources.
 curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" -d "name=resource_1"
 curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" -d "name=resource_2"
