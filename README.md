@@ -16,7 +16,6 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 
 # Set up the configured database.
-python manage.py makemigrations
 python manage.py migrate
 
 # Start a local test server.
