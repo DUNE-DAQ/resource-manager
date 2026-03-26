@@ -41,8 +41,10 @@ curl -k -X POST "http://127.0.0.1:8000/api/remove_resource/" -d "name=resource_1
 curl -k -X POST "http://127.0.0.1:8000/api/query_resource/" -d "name=resource_2"
 ```
 
-One can also register a user using the below command, and login by pointing a web at `http://127.0.0.1:8000/accounts/login/`, although this currently doesn't do anything.
+One can also register a user using the below command, and login by pointing a web at `http://127.0.0.1:8000/accounts/login/`.
 
 ``` bash
 python manage.py createsuperuser
 ```
+
+One may also use this user to modify and administrate the database directly via `http://127.0.0.1:8000/admin/`.
