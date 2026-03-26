@@ -61,6 +61,38 @@ def add_resource(request: HttpRequest) -> JsonResponse:
     return JsonResponse(model_to_dict(resource))
 
 
+def remove_resource(request: HttpRequest) -> JsonResponse:
+    """Remove an unowned resource from the database using a HTTP POST request.
+
+    Args:
+        request: HTTP POST request containing the resource's name.
+
+    Returns:
+        JSON response containing a success or error message.
+    """
+    if request.method != "POST":
+        error_string = f"Only POST requests are allowed. Received '{request.method}'."
+        return JsonResponse({"error": error_string}, status=400)
+
+    # TODO: argument validation and error handling.
+    name = request.POST.get("name")
+
+    try:
+        resource = Resource.objects.get(name=name)
+    except Resource.DoesNotExist:
+        error_string = f"Resource '{name}' does not exist."
+        return JsonResponse({"error": error_string}, status=404)
+
+    # Check that the resource is not owned before removing it.
+    if resource.owner is not None:
+        error_string = f"Resource '{name}' is currently owned by '{resource.owner}'."
+        return JsonResponse({"error": error_string}, status=400)
+
+    resource.delete()
+
+    return JsonResponse({"message": f"Resource '{name}' removed successfully."})
+
+
 def query_resource(request: HttpRequest) -> JsonResponse:
     """Query a resource from the database using a HTTP POST request.
 
