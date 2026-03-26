@@ -1,5 +1,6 @@
 """View functions for the main resource manager app."""
 
+from django.forms.models import model_to_dict
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
 from .models import Resource
@@ -45,12 +46,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
     resource_name = request.POST.get("resource_name")
     resource = Resource.objects.create(name=resource_name)
 
-    return JsonResponse(
-        {
-            "resource_name": resource.name,
-            "owner": resource.owner,
-        }
-    )
+    return JsonResponse(model_to_dict(resource))
 
 
 def query_resource(request: HttpRequest) -> JsonResponse:
@@ -69,12 +65,7 @@ def query_resource(request: HttpRequest) -> JsonResponse:
     resource_name = request.POST.get("resource_name")
     resource = Resource.objects.get(name=resource_name)
 
-    return JsonResponse(
-        {
-            "resource_name": resource.name,
-            "owner": resource.owner,
-        }
-    )
+    return JsonResponse(model_to_dict(resource))
 
 
 def take_resource(request: HttpRequest) -> JsonResponse:
@@ -98,12 +89,7 @@ def take_resource(request: HttpRequest) -> JsonResponse:
     resource.owner = username
     resource.save()
 
-    return JsonResponse(
-        {
-            "resource_name": resource.name,
-            "owner": resource.owner,
-        }
-    )
+    return JsonResponse(model_to_dict(resource))
 
 
 def release_resource(request: HttpRequest) -> JsonResponse:
@@ -125,9 +111,4 @@ def release_resource(request: HttpRequest) -> JsonResponse:
     resource.owner = None
     resource.save()
 
-    return JsonResponse(
-        {
-            "resource_name": resource.name,
-            "owner": resource.owner,
-        }
-    )
+    return JsonResponse(model_to_dict(resource))
