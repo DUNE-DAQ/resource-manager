@@ -1,4 +1,4 @@
-"""URL configuration for the API version 1."""
+"""URL configuration for the resource manager API."""
 
 from django.urls import path
 

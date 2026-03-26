@@ -1,4 +1,4 @@
-"""View functions for the main resource manager app."""
+"""View functions for the resource manager API."""
 
 from django.db import IntegrityError
 from django.forms.models import model_to_dict
