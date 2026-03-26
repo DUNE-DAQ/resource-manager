@@ -3,9 +3,10 @@
 This package provides a web app and API for interacting with abstract 'resource' objects
 in a multi-user software environment. The frontend stack is Django, however any backend
 WSGI/ASGI server and database may be configured. When ran in development mode using the
-`manage.py` script, a simple development server and SQLite database is instantiated.
+`manage.py` script, a basic Django server and SQLite database are instantiated, and any
+code changes will take effect immediately.
 
-Follow the instructions below to quickly set up sych a development instance.
+Follow the instructions below to quickly set up a development instance.
 
 ## TLDR Setup
 
