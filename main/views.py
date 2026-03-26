@@ -25,7 +25,12 @@ def index(request: HttpRequest) -> HttpResponse:
         message += f"Hello {request.user.get_username()}. "
     message += "You are at the index.</br></br>"
     for res in all_resources:
-        message += f"Name: {res.name},  Owner: {res.owner}</br>"
+        message += (
+            f"Name: {res.name}, "
+            f"Owner: {res.owner}, "
+            f"Session ID: {res.session_id}, "
+            f"Session Name: {res.session_name}</br>"
+        )
 
     return HttpResponse(message)
 
@@ -34,7 +39,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
     """Add a resource to the database using a HTTP POST request.
 
     Args:
-        request: HTTP POST request containing owner, resource_name, session_name and session_id.
+        request: HTTP POST request containing resource_name.
 
     Returns:
         JSON response containing the created resource or an error message.
