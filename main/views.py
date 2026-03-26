@@ -39,7 +39,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
     """Add a resource to the database using a HTTP POST request.
 
     Args:
-        request: HTTP POST request containing resource_name.
+        request: HTTP POST request containing the resource's name.
 
     Returns:
         JSON response containing the created resource or an error message.
@@ -48,8 +48,8 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
-    resource_name = request.POST.get("resource_name")
-    resource = Resource.objects.create(name=resource_name)
+    name = request.POST.get("name")
+    resource = Resource.objects.create(name=name)
 
     return JsonResponse(model_to_dict(resource))
 
@@ -58,7 +58,7 @@ def query_resource(request: HttpRequest) -> JsonResponse:
     """Query a resource from the database using a HTTP POST request.
 
     Args:
-        request: HTTP POST request containing resource_name.
+        request: HTTP POST request containing the resource's name.
 
     Returns:
         JSON response containing the queried resource.
@@ -67,8 +67,8 @@ def query_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
-    resource_name = request.POST.get("resource_name")
-    resource = Resource.objects.get(name=resource_name)
+    name = request.POST.get("name")
+    resource = Resource.objects.get(name=name)
 
     return JsonResponse(model_to_dict(resource))
 
@@ -77,7 +77,7 @@ def take_resource(request: HttpRequest) -> JsonResponse:
     """Take ownership of a resource using a HTTP POST request.
 
     Args:
-        request: HTTP POST request containing resource_name.
+        request: HTTP POST request containing name, owner, session_name and session_id.
 
     Returns:
         JSON response containing the resource with updated ownership.
@@ -86,8 +86,8 @@ def take_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
-    resource_name = request.POST.get("resource_name")
-    resource = Resource.objects.get(name=resource_name)
+    name = request.POST.get("name")
+    resource = Resource.objects.get(name=name)
 
     # TODO: view to handle sessions AND bearer tokens.
     username = "PLACEHOLDER_OWNER"
@@ -101,7 +101,7 @@ def release_resource(request: HttpRequest) -> JsonResponse:
     """Release ownership of a resource using a HTTP POST request.
 
     Args:
-        request: HTTP POST request containing resource_name.
+        request: HTTP POST request containing the resource's name.
 
     Returns:
         JSON response containing the resource with updated ownership.
@@ -110,8 +110,8 @@ def release_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
-    resource_name = request.POST.get("resource_name")
-    resource = Resource.objects.get(name=resource_name)
+    name = request.POST.get("name")
+    resource = Resource.objects.get(name=name)
 
     resource.owner = None
     resource.save()
