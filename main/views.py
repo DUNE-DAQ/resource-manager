@@ -48,7 +48,9 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
+    # TODO: argument validation and error handling.
     name = request.POST.get("name")
+
     resource = Resource.objects.create(name=name)
 
     return JsonResponse(model_to_dict(resource))
@@ -67,7 +69,9 @@ def query_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
+    # TODO: argument validation and error handling.
     name = request.POST.get("name")
+
     resource = Resource.objects.get(name=name)
 
     return JsonResponse(model_to_dict(resource))
@@ -86,12 +90,16 @@ def take_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
+    # TODO: argument validation and error handling.
     name = request.POST.get("name")
-    resource = Resource.objects.get(name=name)
+    owner = request.POST.get("owner")
+    session_id = request.POST.get("session_id")
+    session_name = request.POST.get("session_name")
 
-    # TODO: view to handle sessions AND bearer tokens.
-    username = "PLACEHOLDER_OWNER"
-    resource.owner = username
+    resource = Resource.objects.get(name=name)
+    resource.owner = owner
+    resource.session_id = session_id
+    resource.session_name = session_name
     resource.save()
 
     return JsonResponse(model_to_dict(resource))
@@ -110,10 +118,13 @@ def release_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received {request.method}."
         return JsonResponse({"error": error_string}, status=400)
 
+    # TODO: argument validation and error handling.
     name = request.POST.get("name")
-    resource = Resource.objects.get(name=name)
 
+    resource = Resource.objects.get(name=name)
     resource.owner = None
+    resource.session_id = None
+    resource.session_name = None
     resource.save()
 
     return JsonResponse(model_to_dict(resource))
