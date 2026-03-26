@@ -36,8 +36,7 @@ Interact with the API using a HTTP client capable of the `POST` method, such as 
 
 ```bash
 # Add some resources.
-curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" -d "name=resource_1"
-curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" -d "name=resource_2"
+curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" -d "names=resource_1,resource_2"
 
 # Take control.
 curl -k -X POST "http://127.0.0.1:8000/api/take_resource/" \
