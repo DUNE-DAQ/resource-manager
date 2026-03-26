@@ -20,8 +20,11 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received '{request.method}'."
         return JsonResponse({"error": error_string}, status=400)
 
-    # TODO: argument validation and error handling.
-    name = request.POST.get("name")
+    try:
+        name = request.POST["name"]
+    except KeyError:
+        error_string = "Missing required argument 'name'."
+        return JsonResponse({"error": error_string}, status=400)
 
     try:
         resource = Resource.objects.create(name=name)
@@ -45,8 +48,11 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received '{request.method}'."
         return JsonResponse({"error": error_string}, status=400)
 
-    # TODO: argument validation and error handling.
-    name = request.POST.get("name")
+    try:
+        name = request.POST["name"]
+    except KeyError:
+        error_string = "Missing required argument 'name'."
+        return JsonResponse({"error": error_string}, status=400)
 
     try:
         resource = Resource.objects.get(name=name)
@@ -77,8 +83,11 @@ def query_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received '{request.method}'."
         return JsonResponse({"error": error_string}, status=400)
 
-    # TODO: argument validation and error handling.
-    name = request.POST.get("name")
+    try:
+        name = request.POST["name"]
+    except KeyError:
+        error_string = "Missing required argument 'name'."
+        return JsonResponse({"error": error_string}, status=400)
 
     try:
         resource = Resource.objects.get(name=name)
@@ -102,11 +111,14 @@ def take_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received '{request.method}'."
         return JsonResponse({"error": error_string}, status=400)
 
-    # TODO: argument validation and error handling.
-    name = request.POST.get("name")
-    owner = request.POST.get("owner")
-    session_id = request.POST.get("session_id")
-    session_name = request.POST.get("session_name")
+    try:
+        name = request.POST["name"]
+        owner = request.POST["owner"]
+        session_id = request.POST["session_id"]
+        session_name = request.POST["session_name"]
+    except KeyError as e:
+        error_string = f"Missing required argument '{e.args[0]}'."
+        return JsonResponse({"error": error_string}, status=400)
 
     try:
         resource = Resource.objects.get(name=name)
@@ -140,8 +152,11 @@ def release_resource(request: HttpRequest) -> JsonResponse:
         error_string = f"Only POST requests are allowed. Received '{request.method}'."
         return JsonResponse({"error": error_string}, status=400)
 
-    # TODO: argument validation and error handling.
-    name = request.POST.get("name")
+    try:
+        name = request.POST["name"]
+    except KeyError:
+        error_string = "Missing required argument 'name'."
+        return JsonResponse({"error": error_string}, status=400)
 
     try:
         resource = Resource.objects.get(name=name)
