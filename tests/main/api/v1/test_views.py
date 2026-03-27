@@ -5,7 +5,13 @@ import json
 import pytest
 from django.test import RequestFactory
 
-from main.api.v1.views import add_resource, query_resource, remove_resource, take_resource
+from main.api.v1.views import (
+    add_resource,
+    query_resource,
+    release_resource,
+    remove_resource,
+    take_resource,
+)
 from main.models import Resource
 
 
@@ -260,7 +266,7 @@ class TestTakeResource:
         assert payload == {"message": "Only POST requests are allowed. Received 'GET'."}
         assert Resource.objects.count() == 0
 
-    def test_requires_arguments(self):
+    def test_requires_all_arguments(self):
         """Test that all arguments are required."""
         args = ["names", "owner", "session_id", "session_name"]
         data = {
@@ -377,3 +383,140 @@ class TestTakeResource:
         assert beta.owner == "batman"
         assert beta.session_id == "new-sid"
         assert beta.session_name == "new session"
+
+
+@pytest.mark.django_db
+class TestReleaseResource:
+    """Tests for the release_resource view function."""
+
+    def test_rejects_non_post(self):
+        """Test that non-POST requests are rejected."""
+        request = RequestFactory().get("/release-resource/")
+
+        response = release_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 400
+        assert payload == {"message": "Only POST requests are allowed. Received 'GET'."}
+        assert Resource.objects.count() == 0
+
+    def test_requires_all_arguments(self):
+        """Test that all arguments are required."""
+        args = ["names", "owner"]
+        data = {
+            "names": "alpha",
+            "owner": "batman",
+        }
+
+        for missing_arg in args:
+            test_data = {k: v for k, v in data.items() if k != missing_arg}
+
+            request = RequestFactory().post(
+                "/release-resource/",
+                data=test_data,
+            )
+
+            response = release_resource(request)
+            payload = json.loads(response.content)
+
+            assert response.status_code == 400
+            assert payload == {"message": f"Missing required argument '{missing_arg}'."}
+            assert Resource.objects.count() == 0
+
+    def test_releases_owned_resources(self):
+        """Test that resources owned by the given owner are released."""
+        Resource.objects.create(
+            name="alpha",
+            owner="batman",
+            session_id="s1",
+            session_name="session one",
+        )
+        Resource.objects.create(
+            name="beta",
+            owner="batman",
+            session_id="s2",
+            session_name="session two",
+        )
+
+        request = RequestFactory().post(
+            "/release-resource/",
+            data={
+                "names": "alpha,beta",
+                "owner": "batman",
+            },
+        )
+
+        response = release_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 200
+        assert payload["message"] == "2 resources released."
+        assert payload["missing"] == []
+        assert payload["not_owned"] == []
+
+        alpha = Resource.objects.get(name="alpha")
+        assert alpha.owner is None
+        assert alpha.session_id is None
+        assert alpha.session_name is None
+
+        beta = Resource.objects.get(name="beta")
+        assert beta.owner is None
+        assert beta.session_id is None
+        assert beta.session_name is None
+
+    def test_skips_missing_resources(self):
+        """Test that missing resources are skipped and reported as missing."""
+        Resource.objects.create(
+            name="alpha",
+            owner="batman",
+            session_id="s1",
+            session_name="session one",
+        )
+
+        request = RequestFactory().post(
+            "/release-resource/",
+            data={
+                "names": "alpha,beta",
+                "owner": "batman",
+            },
+        )
+
+        response = release_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 200
+        assert payload["message"] == "1 resources released. 1 missing resources skipped."
+        assert payload["missing"] == ["beta"]
+        assert payload["not_owned"] == []
+
+    def test_skips_not_owned_resources(self):
+        """Test that not-owned resources are skipped and reported as not-owned."""
+        Resource.objects.create(
+            name="alpha",
+            owner="batman",
+            session_id="s1",
+            session_name="session one",
+        )
+        Resource.objects.create(
+            name="beta",
+            owner="alice",
+            session_id="a1",
+            session_name="alice_session",
+        )
+        Resource.objects.create(name="gamma")
+
+        request = RequestFactory().post(
+            "/release-resource/",
+            data={
+                "names": "alpha,beta,gamma",
+                "owner": "batman",
+            },
+        )
+
+        response = release_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 200
+        assert payload["message"] == "1 resources released. 2 unowned resources skipped."
+        assert payload["missing"] == []
+        assert set(payload["not_owned"]) == {"beta", "gamma"}
