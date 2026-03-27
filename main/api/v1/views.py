@@ -13,7 +13,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         request: HTTP POST request containing resource names.
 
     Returns:
-        JSON response containing a status message and any names which failed.
+        JSON response containing a status message and any failures.
     """
     if request.method != "POST":
         message = f"Only POST requests are allowed. Received '{request.method}'."
@@ -25,7 +25,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
 
-    # Find duplicate names.
+    # Find duplicate resources.
     bad_name_query = Resource.objects.filter(name__in=names)
     duplicates = set(bad_name_query.values_list("name", flat=True))
 
@@ -48,7 +48,7 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
         request: HTTP POST request containing resource names.
 
     Returns:
-        JSON response containing a status message and any names which failed.
+        JSON response containing a status message and any failures.
     """
     if request.method != "POST":
         message = f"Only POST requests are allowed. Received '{request.method}'."
@@ -60,12 +60,12 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
 
-    # Find names of existing and missing resources.
+    # Find existing and missing resources.
     existing = Resource.objects.filter(name__in=names)
     existing_names = set(existing.values_list("name", flat=True))
     missing_names = set(names) - existing_names
 
-    # Find names of owned and unowned resources.
+    # Find owned and unowned resources.
     existing_unowned = existing.filter(owner__isnull=True)
     existing_unowned_names = set(existing_unowned.values_list("name", flat=True))
     existing_owned_names = existing_names - existing_unowned_names
@@ -87,31 +87,49 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
 
 
 def query_resource(request: HttpRequest) -> JsonResponse:
-    """Query a resource from the database using a HTTP POST request.
+    """Query resources from the database using a HTTP POST request.
 
     Args:
-        request: HTTP POST request containing the resource's name.
+        request: HTTP POST request containing resource names.
 
     Returns:
-        JSON response containing the queried resource.
+        JSON response containing a status message, the queried resources and any failures.
     """
     if request.method != "POST":
         message = f"Only POST requests are allowed. Received '{request.method}'."
         return JsonResponse({"message": message}, status=400)
 
     try:
-        name = request.POST["name"]
+        names = request.POST["names"].split(",")
     except KeyError:
-        message = "Missing required argument 'name'."
+        message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
 
-    try:
-        resource = Resource.objects.get(name=name)
-    except Resource.DoesNotExist:
-        message = f"Resource '{name}' does not exist."
-        return JsonResponse({"message": message}, status=404)
+    # Find existing and missing resources.
+    existing = Resource.objects.filter(name__in=names)
+    existing_names = set(existing.values_list("name", flat=True))
+    missing_names = set(names) - existing_names
 
-    return JsonResponse(model_to_dict(resource))
+    # Build query list.
+    queries = [
+        {
+            "name": r.name,
+            "owner": r.owner,
+            "session_id": r.session_id,
+            "session_name": r.session_name,
+        }
+        for r in existing
+    ]
+
+    # Report queried and missing resources.
+    message = f"{len(existing_names)} resources queried."
+    if missing_names:
+        message += f" {len(missing_names)} missing resources skipped."
+
+    return JsonResponse(
+        {"message": message, "queries": queries, "missing": list(missing_names)},
+        status=200,
+    )
 
 
 def take_resource(request: HttpRequest) -> JsonResponse:
