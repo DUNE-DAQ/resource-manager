@@ -19,7 +19,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = request.POST["names"].split(",")
+        names = set(request.POST["names"].split(","))
     except KeyError:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
@@ -54,7 +54,7 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = request.POST["names"].split(",")
+        names = set(request.POST["names"].split(","))
     except KeyError:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
@@ -62,7 +62,7 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
     # Find existing and missing resources.
     existing = Resource.objects.filter(name__in=names)
     existing_names = set(existing.values_list("name", flat=True))
-    missing_names = set(names) - existing_names
+    missing_names = names - existing_names
 
     # Find owned and unowned resources.
     existing_not_owned = existing.filter(owner__isnull=True)
@@ -103,7 +103,7 @@ def query_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = request.POST["names"].split(",")
+        names = set(request.POST["names"].split(","))
     except KeyError:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
@@ -111,7 +111,7 @@ def query_resource(request: HttpRequest) -> JsonResponse:
     # Find existing and missing resources.
     existing = Resource.objects.filter(name__in=names)
     existing_names = set(existing.values_list("name", flat=True))
-    missing_names = set(names) - existing_names
+    missing_names = names - existing_names
 
     # Build query list.
     queries = [
@@ -149,7 +149,7 @@ def take_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = request.POST["names"].split(",")
+        names = set(request.POST["names"].split(","))
         owner = request.POST["owner"]
         session_id = request.POST["session_id"]
         session_name = request.POST["session_name"]
@@ -160,7 +160,7 @@ def take_resource(request: HttpRequest) -> JsonResponse:
     # Find existing and missing resources.
     existing = Resource.objects.filter(name__in=names)
     existing_names = set(existing.values_list("name", flat=True))
-    missing_names = set(names) - existing_names
+    missing_names = names - existing_names
 
     # Take ownership of existing resources that are not owned.
     existing_not_owned_names = set()
@@ -206,7 +206,7 @@ def release_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = request.POST["names"].split(",")
+        names = set(request.POST["names"].split(","))
         owner = request.POST["owner"]
     except KeyError as e:
         message = f"Missing required argument '{e.args[0]}'."
@@ -215,7 +215,7 @@ def release_resource(request: HttpRequest) -> JsonResponse:
     # Find existing and missing resources.
     existing = Resource.objects.filter(name__in=names)
     existing_names = set(existing.values_list("name", flat=True))
-    missing_names = set(names) - existing_names
+    missing_names = names - existing_names
 
     # Release ownership of existing resources that are owned by <owner>.
     existing_not_owned_names = set()
