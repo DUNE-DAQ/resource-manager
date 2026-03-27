@@ -5,7 +5,7 @@ import json
 import pytest
 from django.test import RequestFactory
 
-from main.api.v1.views import add_resource, remove_resource
+from main.api.v1.views import add_resource, query_resource, remove_resource
 from main.models import Resource
 
 
@@ -159,3 +159,101 @@ class TestRemoveResource:
         assert payload["already_owned"] == ["alpha"]
         assert Resource.objects.filter(name="alpha", owner="james").exists()
         assert not Resource.objects.filter(name="beta").exists()
+
+
+@pytest.mark.django_db
+class TestQueryResource:
+    """Tests for the query_resource view function."""
+
+    def test_rejects_non_post(self):
+        """Test that non-POST requests are rejected."""
+        request = RequestFactory().get("/query-resource/")
+
+        response = query_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 400
+        assert payload == {"message": "Only POST requests are allowed. Received 'GET'."}
+        assert Resource.objects.count() == 0
+
+    def test_requires_names_argument(self):
+        """Test that the 'names' argument is required."""
+        request = RequestFactory().post("/query-resource/", data={})
+
+        response = query_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 400
+        assert payload == {"message": "Missing required argument 'names'."}
+        assert Resource.objects.count() == 0
+
+    def test_queries_existing_resources(self):
+        """Test that existing resources are queried and returned in the response."""
+        Resource.objects.create(
+            name="alpha",
+            owner="batman",
+            session_id=None,
+            session_name=None,
+        )
+        Resource.objects.create(
+            name="beta",
+            owner="alice",
+            session_id="s2",
+            session_name="session two",
+        )
+
+        request = RequestFactory().post(
+            "/query-resource/",
+            data={"names": "alpha,beta"},
+        )
+
+        response = query_resource(request)
+        payload = json.loads(response.content)
+        results_by_name = {r["name"]: r for r in payload["query_results"]}
+
+        assert response.status_code == 200
+        assert payload["message"] == "2 resources queried."
+        assert payload["missing"] == []
+        assert results_by_name == {
+            "alpha": {
+                "name": "alpha",
+                "owner": "batman",
+                "session_id": None,
+                "session_name": None,
+            },
+            "beta": {
+                "name": "beta",
+                "owner": "alice",
+                "session_id": "s2",
+                "session_name": "session two",
+            },
+        }
+
+    def test_skips_missing_resources(self):
+        """Test that missing resources are skipped and reported as missing."""
+        Resource.objects.create(
+            name="alpha",
+            owner="batman",
+            session_id="s1",
+            session_name="session one",
+        )
+
+        request = RequestFactory().post(
+            "/query-resource/",
+            data={"names": "alpha,beta"},
+        )
+
+        response = query_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 200
+        assert payload["message"] == "1 resources queried. 1 missing resources skipped."
+        assert payload["missing"] == ["beta"]
+        assert payload["query_results"] == [
+            {
+                "name": "alpha",
+                "owner": "batman",
+                "session_id": "s1",
+                "session_name": "session one",
+            }
+        ]
