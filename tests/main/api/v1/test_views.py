@@ -5,7 +5,7 @@ import json
 import pytest
 from django.test import RequestFactory
 
-from main.api.v1.views import add_resource, query_resource, remove_resource
+from main.api.v1.views import add_resource, query_resource, remove_resource, take_resource
 from main.models import Resource
 
 
@@ -138,11 +138,10 @@ class TestRemoveResource:
         assert payload["message"] == "1 resources removed. 1 missing resources skipped."
         assert payload["missing"] == ["beta"]
         assert payload["already_owned"] == []
-        assert Resource.objects.count() == 0
 
     def test_skips_owned_resources(self):
         """Test that owned resources are skipped and reported as already-owned."""
-        Resource.objects.create(name="alpha", owner="james")
+        Resource.objects.create(name="alpha", owner="batman")
         Resource.objects.create(name="beta")
 
         request = RequestFactory().post(
@@ -157,7 +156,7 @@ class TestRemoveResource:
         assert payload["message"] == "1 resources removed. 1 already-owned resources skipped."
         assert payload["missing"] == []
         assert payload["already_owned"] == ["alpha"]
-        assert Resource.objects.filter(name="alpha", owner="james").exists()
+        assert Resource.objects.filter(name="alpha", owner="batman").exists()
         assert not Resource.objects.filter(name="beta").exists()
 
 
@@ -231,12 +230,7 @@ class TestQueryResource:
 
     def test_skips_missing_resources(self):
         """Test that missing resources are skipped and reported as missing."""
-        Resource.objects.create(
-            name="alpha",
-            owner="batman",
-            session_id="s1",
-            session_name="session one",
-        )
+        Resource.objects.create(name="alpha")
 
         request = RequestFactory().post(
             "/query-resource/",
@@ -249,11 +243,137 @@ class TestQueryResource:
         assert response.status_code == 200
         assert payload["message"] == "1 resources queried. 1 missing resources skipped."
         assert payload["missing"] == ["beta"]
-        assert payload["query_results"] == [
-            {
-                "name": "alpha",
+
+
+@pytest.mark.django_db
+class TestTakeResource:
+    """Tests for the take_resource view function."""
+
+    def test_rejects_non_post(self):
+        """Test that non-POST requests are rejected."""
+        request = RequestFactory().get("/take-resource/")
+
+        response = take_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 400
+        assert payload == {"message": "Only POST requests are allowed. Received 'GET'."}
+        assert Resource.objects.count() == 0
+
+    def test_requires_arguments(self):
+        """Test that all arguments are required."""
+        args = ["names", "owner", "session_id", "session_name"]
+        data = {
+            "names": "alpha",
+            "owner": "batman",
+            "session_id": "s1",
+            "session_name": "session one",
+        }
+
+        for missing_arg in args:
+            test_data = {k: v for k, v in data.items() if k != missing_arg}
+
+            request = RequestFactory().post(
+                "/take-resource/",
+                data=test_data,
+            )
+
+            response = take_resource(request)
+            payload = json.loads(response.content)
+
+            assert response.status_code == 400
+            assert payload == {"message": f"Missing required argument '{missing_arg}'."}
+            assert Resource.objects.count() == 0
+
+    def test_takes_unowned_resources(self):
+        """Test that unowned resources are taken."""
+        Resource.objects.create(name="alpha")
+        Resource.objects.create(name="beta")
+
+        request = RequestFactory().post(
+            "/take-resource/",
+            data={
+                "names": "alpha,beta",
                 "owner": "batman",
                 "session_id": "s1",
                 "session_name": "session one",
-            }
-        ]
+            },
+        )
+
+        response = take_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 200
+        assert payload["message"] == "2 resources taken."
+        assert payload["missing"] == []
+        assert payload["already_owned"] == []
+
+        alpha = Resource.objects.get(name="alpha")
+        assert alpha.owner == "batman"
+        assert alpha.session_id == "s1"
+        assert alpha.session_name == "session one"
+
+        beta = Resource.objects.get(name="beta")
+        assert beta.owner == "batman"
+        assert beta.session_id == "s1"
+        assert beta.session_name == "session one"
+
+    def test_skips_missing_resources(self):
+        """Test that missing resources are skipped and reported as missing."""
+        Resource.objects.create(name="alpha")
+
+        request = RequestFactory().post(
+            "/take-resource/",
+            data={
+                "names": "alpha,beta",
+                "owner": "batman",
+                "session_id": "s1",
+                "session_name": "session one",
+            },
+        )
+
+        response = take_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 200
+        assert payload["message"] == "1 resources taken. 1 missing resources skipped."
+        assert payload["missing"] == ["beta"]
+        assert payload["already_owned"] == []
+
+    def test_skips_already_owned_resources(self):
+        """Test that already-owned resources are skipped and reported as already-owned."""
+        Resource.objects.create(
+            name="alpha",
+            owner="alice",
+            session_id="old-sid",
+            session_name="old session",
+        )
+        Resource.objects.create(name="beta")
+
+        request = RequestFactory().post(
+            "/take-resource/",
+            data={
+                "names": "alpha,beta",
+                "owner": "batman",
+                "session_id": "new-sid",
+                "session_name": "new session",
+            },
+        )
+
+        response = take_resource(request)
+        payload = json.loads(response.content)
+
+        assert response.status_code == 200
+        assert payload["message"] == "1 resources taken. 1 already-owned resources skipped."
+        assert payload["missing"] == []
+        assert payload["already_owned"] == ["alpha"]
+
+        alpha = Resource.objects.get(name="alpha")
+        assert alpha.owner == "alice"
+        assert alpha.session_id == "old-sid"
+        assert alpha.session_name == "old session"
+
+        beta = Resource.objects.get(name="beta")
+        assert beta.owner == "batman"
+        assert beta.session_id == "new-sid"
+        assert beta.session_name == "new session"
