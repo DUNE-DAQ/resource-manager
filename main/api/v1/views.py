@@ -13,7 +13,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         request: HTTP POST request containing resource names.
 
     Returns:
-        JSON response containing the created resource or an error message.
+        JSON response containing a status message and any names which failed.
     """
     if request.method != "POST":
         message = f"Only POST requests are allowed. Received '{request.method}'."
@@ -26,14 +26,15 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     # Find duplicate names.
-    duplicates = set(Resource.objects.filter(name__in=names).values_list("name", flat=True))
+    bad_name_query = Resource.objects.filter(name__in=names)
+    duplicates = set(bad_name_query.values_list("name", flat=True))
 
     # Create new resources, skipping duplicates.
-    new_names = [n for n in names if n not in duplicates]
-    Resource.objects.bulk_create([Resource(name=n) for n in new_names])
+    added_names = [n for n in names if n not in duplicates]
+    Resource.objects.bulk_create([Resource(name=n) for n in added_names])
 
-    # Report new and duplicate resources.
-    message = f"{len(new_names)} new resources added."
+    # Report added and already-existing resources.
+    message = f"{len(added_names)} resources added."
     if duplicates:
         message += f" {len(duplicates)} duplicate resources skipped."
 
@@ -44,35 +45,45 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
     """Remove an unowned resource from the database using a HTTP POST request.
 
     Args:
-        request: HTTP POST request containing the resource's name.
+        request: HTTP POST request containing resource names.
 
     Returns:
-        JSON response containing a success or error message.
+        JSON response containing a status message and any names which failed.
     """
     if request.method != "POST":
         message = f"Only POST requests are allowed. Received '{request.method}'."
         return JsonResponse({"message": message}, status=400)
 
     try:
-        name = request.POST["name"]
+        names = request.POST["names"].split(",")
     except KeyError:
-        message = "Missing required argument 'name'."
+        message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
 
-    try:
-        resource = Resource.objects.get(name=name)
-    except Resource.DoesNotExist:
-        message = f"Resource '{name}' does not exist."
-        return JsonResponse({"message": message}, status=404)
+    # Find names of existing and missing resources.
+    existing = Resource.objects.filter(name__in=names)
+    existing_names = set(existing.values_list("name", flat=True))
+    missing_names = set(names) - existing_names
 
-    # Check that the resource is not owned before removing it.
-    if resource.owner is not None:
-        message = f"Resource '{name}' is currently owned by '{resource.owner}'."
-        return JsonResponse({"message": message}, status=400)
+    # Find names of owned and unowned resources.
+    existing_unowned = existing.filter(owner__isnull=True)
+    existing_unowned_names = set(existing_unowned.values_list("name", flat=True))
+    existing_owned_names = existing_names - existing_unowned_names
 
-    resource.delete()
+    # Only remove existing resources which are unowned.
+    existing_unowned.delete()
 
-    return JsonResponse({"message": f"Resource '{name}' removed successfully."})
+    # Report removed, misssing and still-owned resources.
+    message = f"{len(existing_unowned_names)} resources removed."
+    if missing_names:
+        message += f" {len(missing_names)} missing resources skipped."
+    if existing_owned_names:
+        message += f" {len(existing_owned_names)} still-owned resources skipped."
+
+    return JsonResponse(
+        {"message": message, "missing": list(missing_names), "owned": list(existing_owned_names)},
+        status=200,
+    )
 
 
 def query_resource(request: HttpRequest) -> JsonResponse:
