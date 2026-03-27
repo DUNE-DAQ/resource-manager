@@ -7,7 +7,7 @@ from ...models import Resource
 
 
 def add_resource(request: HttpRequest) -> JsonResponse:
-    """Add a resource to the database using a HTTP POST request.
+    """Add resources to the database using a HTTP POST request.
 
     Args:
         request: HTTP POST request containing resource names.
@@ -42,7 +42,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
 
 
 def remove_resource(request: HttpRequest) -> JsonResponse:
-    """Remove an unowned resource from the database using a HTTP POST request.
+    """Remove unowned resources from the database using a HTTP POST request.
 
     Args:
         request: HTTP POST request containing resource names.
