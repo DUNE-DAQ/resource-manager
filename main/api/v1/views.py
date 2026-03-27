@@ -19,7 +19,7 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = set(request.POST["names"].split(","))
+        names = {n.strip() for n in request.POST["names"].split(",")}
     except KeyError:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
@@ -54,7 +54,7 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = set(request.POST["names"].split(","))
+        names = {n.strip() for n in request.POST["names"].split(",")}
     except KeyError:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
@@ -103,7 +103,7 @@ def query_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = set(request.POST["names"].split(","))
+        names = {n.strip() for n in request.POST["names"].split(",")}
     except KeyError:
         message = "Missing required argument 'names'."
         return JsonResponse({"message": message}, status=400)
@@ -149,10 +149,10 @@ def take_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = set(request.POST["names"].split(","))
-        owner = request.POST["owner"]
-        session_id = request.POST["session_id"]
-        session_name = request.POST["session_name"]
+        names = {n.strip() for n in request.POST["names"].split(",")}
+        owner = request.POST["owner"].strip()
+        session_id = request.POST["session_id"].strip()
+        session_name = request.POST["session_name"].strip()
     except KeyError as e:
         message = f"Missing required argument '{e.args[0]}'."
         return JsonResponse({"message": message}, status=400)
@@ -206,8 +206,8 @@ def release_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     try:
-        names = set(request.POST["names"].split(","))
-        owner = request.POST["owner"]
+        names = {n.strip() for n in request.POST["names"].split(",")}
+        owner = request.POST["owner"].strip()
     except KeyError as e:
         message = f"Missing required argument '{e.args[0]}'."
         return JsonResponse({"message": message}, status=400)
