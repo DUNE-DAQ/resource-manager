@@ -44,7 +44,8 @@ curl -k -X POST "http://127.0.0.1:8000/api/take_resource/" \
 -d "session_id=session_1" -d "session_name=my_session"
 
 # Release one.
-curl -k -X POST "http://127.0.0.1:8000/api/release_resource/" -d "names=resource_1"
+curl -k -X POST "http://127.0.0.1:8000/api/release_resource/" \
+-d "names=resource_1" -d "owner=${USER}"
 
 # Remove one.
 curl -k -X POST "http://127.0.0.1:8000/api/remove_resource/" -d "names=resource_1"
