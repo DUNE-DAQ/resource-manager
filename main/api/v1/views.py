@@ -162,31 +162,36 @@ def request_resource(request: HttpRequest) -> JsonResponse:
     existing_names = set(existing.values_list("name", flat=True))
     missing_names = names - existing_names
 
+    # Fail early if any existing resources are already owned.
+    existing_owned = existing.filter(owner__isnull=False)
+    if existing_owned.exists():
+        existing_owned_names = set(existing_owned.values_list("name", flat=True))
+        message = "1 or more resources are already owned. Aborting."
+        return JsonResponse(
+            {
+                "message": message,
+                "missing": list(missing_names),
+                "already_owned": list(existing_owned_names),
+            },
+            status=400,
+        )
+
     # Take ownership of existing resources that are not owned.
-    existing_not_owned_names = set()
-    existing_owned_names = set()
     for resource in existing:
-        if resource.owner is None:
-            existing_not_owned_names.add(resource.name)
-            resource.owner = owner
-            resource.session_id = session_id
-            resource.session_name = session_name
-            resource.save()
-        else:
-            existing_owned_names.add(resource.name)
+        resource.owner = owner
+        resource.session_id = session_id
+        resource.session_name = session_name
+        resource.save()
 
     # Report taken, missing and already-owned resources.
-    message = f"{len(existing_not_owned_names)} resources taken."
+    message = f"{len(existing_names)} resources taken."
     if missing_names:
         message += f" {len(missing_names)} missing resources skipped."
-    if existing_owned_names:
-        message += f" {len(existing_owned_names)} already-owned resources skipped."
 
     return JsonResponse(
         {
             "message": message,
             "missing": list(missing_names),
-            "already_owned": list(existing_owned_names),
         },
         status=200,
     )

@@ -312,7 +312,6 @@ class TestRequestResource:
         assert response.status_code == 200
         assert payload["message"] == "2 resources taken."
         assert payload["missing"] == []
-        assert payload["already_owned"] == []
 
         alpha = Resource.objects.get(name="alpha")
         assert alpha.owner == "batman"
@@ -344,10 +343,9 @@ class TestRequestResource:
         assert response.status_code == 200
         assert payload["message"] == "1 resources taken. 1 missing resources skipped."
         assert payload["missing"] == ["beta"]
-        assert payload["already_owned"] == []
 
-    def test_skips_already_owned_resources(self):
-        """Test that already-owned resources are skipped and reported as already-owned."""
+    def test_fails_on_already_owned_resources(self):
+        """Test that any already-owned resources cause a failure."""
         Resource.objects.create(
             name="alpha",
             owner="alice",
@@ -369,8 +367,8 @@ class TestRequestResource:
         response = request_resource(request)
         payload = json.loads(response.content)
 
-        assert response.status_code == 200
-        assert payload["message"] == "1 resources taken. 1 already-owned resources skipped."
+        assert response.status_code == 400
+        assert payload["message"] == "1 or more resources are already owned. Aborting."
         assert payload["missing"] == []
         assert payload["already_owned"] == ["alpha"]
 
@@ -380,9 +378,9 @@ class TestRequestResource:
         assert alpha.session_name == "old session"
 
         beta = Resource.objects.get(name="beta")
-        assert beta.owner == "batman"
-        assert beta.session_id == "new-sid"
-        assert beta.session_name == "new session"
+        assert beta.owner is None
+        assert beta.session_id is None
+        assert beta.session_name is None
 
 
 @pytest.mark.django_db
