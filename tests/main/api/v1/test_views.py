@@ -10,7 +10,7 @@ from main.api.v1.views import (
     query_resource,
     release_resource,
     remove_resource,
-    take_resource,
+    request_resource,
 )
 from main.models import Resource
 
@@ -252,14 +252,14 @@ class TestQueryResource:
 
 
 @pytest.mark.django_db
-class TestTakeResource:
-    """Tests for the take_resource view function."""
+class TestRequestResource:
+    """Tests for the request_resource view function."""
 
     def test_rejects_non_post(self):
         """Test that non-POST requests are rejected."""
-        request = RequestFactory().get("/take-resource/")
+        request = RequestFactory().get("/request-resource/")
 
-        response = take_resource(request)
+        response = request_resource(request)
         payload = json.loads(response.content)
 
         assert response.status_code == 400
@@ -280,11 +280,11 @@ class TestTakeResource:
             test_data = {k: v for k, v in data.items() if k != missing_arg}
 
             request = RequestFactory().post(
-                "/take-resource/",
+                "/request-resource/",
                 data=test_data,
             )
 
-            response = take_resource(request)
+            response = request_resource(request)
             payload = json.loads(response.content)
 
             assert response.status_code == 400
@@ -297,7 +297,7 @@ class TestTakeResource:
         Resource.objects.create(name="beta")
 
         request = RequestFactory().post(
-            "/take-resource/",
+            "/request-resource/",
             data={
                 "names": "alpha,beta",
                 "owner": "batman",
@@ -306,7 +306,7 @@ class TestTakeResource:
             },
         )
 
-        response = take_resource(request)
+        response = request_resource(request)
         payload = json.loads(response.content)
 
         assert response.status_code == 200
@@ -329,7 +329,7 @@ class TestTakeResource:
         Resource.objects.create(name="alpha")
 
         request = RequestFactory().post(
-            "/take-resource/",
+            "/request-resource/",
             data={
                 "names": "alpha,beta",
                 "owner": "batman",
@@ -338,7 +338,7 @@ class TestTakeResource:
             },
         )
 
-        response = take_resource(request)
+        response = request_resource(request)
         payload = json.loads(response.content)
 
         assert response.status_code == 200
@@ -357,7 +357,7 @@ class TestTakeResource:
         Resource.objects.create(name="beta")
 
         request = RequestFactory().post(
-            "/take-resource/",
+            "/request-resource/",
             data={
                 "names": "alpha,beta",
                 "owner": "batman",
@@ -366,7 +366,7 @@ class TestTakeResource:
             },
         )
 
-        response = take_resource(request)
+        response = request_resource(request)
         payload = json.loads(response.content)
 
         assert response.status_code == 200

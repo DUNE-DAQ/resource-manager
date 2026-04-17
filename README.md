@@ -41,8 +41,8 @@ e.g. API version `v1` at `http://127.0.0.1:8000/api/v1/`.
 curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" \
 -d "names=resource_1,resource_2"
 
-# Take control.
-curl -k -X POST "http://127.0.0.1:8000/api/take_resource/" \
+# Request control.
+curl -k -X POST "http://127.0.0.1:8000/api/request_resource/" \
 -d "names=resource_1,resource_2" -d "owner=${USER}" \
 -d "session_id=session_1" -d "session_name=my_session"
 

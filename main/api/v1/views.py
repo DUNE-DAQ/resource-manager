@@ -135,8 +135,8 @@ def query_resource(request: HttpRequest) -> JsonResponse:
     )
 
 
-def take_resource(request: HttpRequest) -> JsonResponse:
-    """Take ownership of resources in the database.
+def request_resource(request: HttpRequest) -> JsonResponse:
+    """Request ownership of resources in the database.
 
     Args:
         request: HTTP POST request containing resource names, owner, session_name, session_id.
