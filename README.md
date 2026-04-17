@@ -33,10 +33,13 @@ python manage.py runserver
 ```
 
 Interact with the API using a HTTP client capable of the `POST` method, such as `curl`.
+One can either access the latest API version at `http://127.0.0.1:8000/api/`, or access
+e.g. API version `v1` at `http://127.0.0.1:8000/api/v1/`.
 
 ```bash
 # Add some resources.
-curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" -d "names=resource_1,resource_2"
+curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" \
+-d "names=resource_1,resource_2"
 
 # Take control.
 curl -k -X POST "http://127.0.0.1:8000/api/take_resource/" \
@@ -48,16 +51,20 @@ curl -k -X POST "http://127.0.0.1:8000/api/release_resource/" \
 -d "names=resource_1" -d "owner=${USER}"
 
 # Remove one.
-curl -k -X POST "http://127.0.0.1:8000/api/remove_resource/" -d "names=resource_1"
+curl -k -X POST "http://127.0.0.1:8000/api/remove_resource/" \
+-d "names=resource_1"
 
 # Query the other.
-curl -k -X POST "http://127.0.0.1:8000/api/query_resource/" -d "names=resource_2"
+curl -k -X POST "http://127.0.0.1:8000/api/query_resource/" \
+-d "names=resource_2"
 ```
 
-One can also register a user using the below command, and login by pointing a web at `http://127.0.0.1:8000/accounts/login/`.
+One can also register a user using the below command, and login by pointing a web at
+`http://127.0.0.1:8000/accounts/login/`.
 
 ``` bash
 python manage.py createsuperuser
 ```
 
-One may also use this user to modify and administrate the database directly via `http://127.0.0.1:8000/admin/`.
+One may also use this user to modify and administrate the database directly via
+`http://127.0.0.1:8000/admin/`.
