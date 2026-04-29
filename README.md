@@ -14,22 +14,25 @@ At any point once the server is started, see a summary of resource allocations b
 pointing a web browser at `http://127.0.0.1:8000/`.
 
 ```bash
-# Set up a Python environment.
+# Set up a Python environment:
 python -m venv .venv
 . .venv/bin/activate
 pip install -U pip
 
-# Either requirements.txt for production:
-pip install -r requirements.txt
+# Either install for production:
+pip install .
 
-# Or requirements-dev.txt for devopment:
-pip install -r requirements-dev.txt
+# Or install for devopment:
+pip install -e .[dev]
 
-# Set up the configured database.
-python manage.py migrate
+# Set up the database:
+resource-manager-manage migrate
 
-# Start a local test server.
-python manage.py runserver
+# Either start a local test server:
+resource-manager-manage runserver
+
+# Or start a gunicorn server:
+resource-manager-run-gunicorn
 ```
 
 Interact with the API using a HTTP client capable of the `POST` method, such as `curl`.

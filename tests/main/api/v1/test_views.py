@@ -5,14 +5,14 @@ import json
 import pytest
 from django.test import RequestFactory
 
-from main.api.v1.views import (
+from resource_manager.main.api.v1.views import (
     add_resource,
     query_resource,
     release_resource,
     remove_resource,
     request_resource,
 )
-from main.models import Resource
+from resource_manager.main.models import Resource
 
 
 @pytest.mark.django_db

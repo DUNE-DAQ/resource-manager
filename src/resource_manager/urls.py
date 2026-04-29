@@ -12,7 +12,7 @@ API_VERSION = "v1"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
-    path("", include("main.urls")),
-    path("api/", include(f"main.api.{API_VERSION}.urls")),
-    path("api/v1/", include("main.api.v1.urls")),
+    path("", include("resource_manager.main.urls")),
+    path("api/", include(f"resource_manager.main.api.{API_VERSION}.urls")),
+    path("api/v1/", include("resource_manager.main.api.v1.urls")),
 ]
