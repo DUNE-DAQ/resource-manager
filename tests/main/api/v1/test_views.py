@@ -126,8 +126,9 @@ class TestRemoveResource:
 
         assert response.status_code == 200
         assert payload["message"] == "3 resources removed."
-        assert payload["missing"] == []
-        assert payload["already_owned"] == []
+        assert set(payload["removed"]) == {"alpha", "beta", "gamma"}
+        assert set(payload["missing"]) == set()
+        assert set(payload["already_owned"]) == set()
         assert Resource.objects.count() == 0
 
     def test_skips_missing_resources(self):
@@ -144,8 +145,9 @@ class TestRemoveResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources removed. 1 missing resources skipped."
-        assert payload["missing"] == ["beta"]
-        assert payload["already_owned"] == []
+        assert set(payload["removed"]) == {"alpha"}
+        assert set(payload["missing"]) == {"beta"}
+        assert set(payload["already_owned"]) == set()
 
     def test_skips_owned_resources(self):
         """Test that owned resources are skipped and reported as already-owned."""
@@ -162,8 +164,9 @@ class TestRemoveResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources removed. 1 already-owned resources skipped."
-        assert payload["missing"] == []
-        assert payload["already_owned"] == ["alpha"]
+        assert set(payload["removed"]) == {"beta"}
+        assert set(payload["missing"]) == set()
+        assert set(payload["already_owned"]) == {"alpha"}
         assert Resource.objects.filter(name="alpha", owner="batman").exists()
         assert not Resource.objects.filter(name="beta").exists()
 
@@ -220,7 +223,7 @@ class TestQueryResource:
 
         assert response.status_code == 200
         assert payload["message"] == "2 resources queried."
-        assert payload["missing"] == []
+        assert set(payload["missing"]) == set()
         assert results_by_name == {
             "alpha": {
                 "name": "alpha",
@@ -250,7 +253,7 @@ class TestQueryResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources queried. 1 missing resources skipped."
-        assert payload["missing"] == ["beta"]
+        assert set(payload["missing"]) == {"beta"}
 
 
 @pytest.mark.django_db
@@ -313,7 +316,7 @@ class TestRequestResource:
 
         assert response.status_code == 200
         assert payload["message"] == "2 resources taken."
-        assert payload["missing"] == []
+        assert set(payload["missing"]) == set()
 
         alpha = Resource.objects.get(name="alpha")
         assert alpha.owner == "batman"
@@ -344,7 +347,7 @@ class TestRequestResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources taken. 1 missing resources skipped."
-        assert payload["missing"] == ["beta"]
+        assert set(payload["missing"]) == {"beta"}
 
     def test_fails_on_already_owned_resources(self):
         """Test that any already-owned resources cause a failure."""
@@ -371,8 +374,8 @@ class TestRequestResource:
 
         assert response.status_code == 400
         assert payload["message"] == "1 or more resources are already owned. Aborting."
-        assert payload["missing"] == []
-        assert payload["already_owned"] == ["alpha"]
+        assert set(payload["missing"]) == set()
+        assert set(payload["already_owned"]) == {"alpha"}
 
         alpha = Resource.objects.get(name="alpha")
         assert alpha.owner == "alice"
@@ -451,8 +454,8 @@ class TestReleaseResource:
 
         assert response.status_code == 200
         assert payload["message"] == "2 resources released."
-        assert payload["missing"] == []
-        assert payload["not_owned"] == []
+        assert set(payload["missing"]) == set()
+        assert set(payload["not_owned"]) == set()
 
         alpha = Resource.objects.get(name="alpha")
         assert alpha.owner is None
@@ -486,8 +489,8 @@ class TestReleaseResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources released. 1 missing resources skipped."
-        assert payload["missing"] == ["beta"]
-        assert payload["not_owned"] == []
+        assert set(payload["missing"]) == {"beta"}
+        assert set(payload["not_owned"]) == set()
 
     def test_skips_not_owned_resources(self):
         """Test that not-owned resources are skipped and reported as not-owned."""
@@ -518,5 +521,5 @@ class TestReleaseResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources released. 2 unowned resources skipped."
-        assert payload["missing"] == []
+        assert set(payload["missing"]) == set()
         assert set(payload["not_owned"]) == {"beta", "gamma"}

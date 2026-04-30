@@ -32,10 +32,13 @@ def add_resource(request: HttpRequest) -> JsonResponse:
     added_names = [n for n in names if n not in duplicate_names]
     Resource.objects.bulk_create([Resource(name=n) for n in added_names])
 
-    # Report added and already-existing resources.
-    message = f"{len(added_names)} resources added."
+    # Report results.
+    message = ""
+    if added_names:
+        message += f"{len(added_names)} resources added. "
     if duplicate_names:
-        message += f" {len(duplicate_names)} duplicate resources skipped."
+        message += f"{len(duplicate_names)} duplicate resources skipped. "
+    message = message.strip()
 
     return JsonResponse(
         {"message": message, "added": added_names, "duplicate": list(duplicate_names)}, status=201
@@ -74,16 +77,20 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
     # Only remove existing resources that are not owned.
     existing_not_owned.delete()
 
-    # Report removed, missing and already-owned resources.
-    message = f"{len(existing_not_owned_names)} resources removed."
+    # Report results.
+    message = ""
+    if existing_not_owned_names:
+        message += f"{len(existing_not_owned_names)} resources removed. "
     if missing_names:
-        message += f" {len(missing_names)} missing resources skipped."
+        message += f"{len(missing_names)} missing resources skipped. "
     if existing_owned_names:
-        message += f" {len(existing_owned_names)} already-owned resources skipped."
+        message += f"{len(existing_owned_names)} already-owned resources skipped. "
+    message = message.strip()
 
     return JsonResponse(
         {
             "message": message,
+            "removed": list(existing_not_owned_names),
             "missing": list(missing_names),
             "already_owned": list(existing_owned_names),
         },
