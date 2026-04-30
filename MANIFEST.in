@@ -1,1 +1,1 @@
-recursive-include src/drunc_ui *.html *.css *.js *.png *.svg *.json
+recursive-include src/resource_manager *.html *.css *.js *.png *.svg *.json
