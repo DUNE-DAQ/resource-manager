@@ -133,10 +133,13 @@ def query_resource(request: HttpRequest) -> JsonResponse:
         for r in existing
     ]
 
-    # Report queried and missing resources.
-    message = f"{len(existing_names)} resources queried."
+    # Report results.
+    message = ""
+    if existing_names:
+        message += f"{len(existing_names)} resources queried. "
     if missing_names:
-        message += f" {len(missing_names)} missing resources skipped."
+        message += f"{len(missing_names)} missing resources skipped. "
+    message = message.strip()
 
     return JsonResponse(
         {"message": message, "query_results": queries, "missing": list(missing_names)},
