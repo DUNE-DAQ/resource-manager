@@ -2,9 +2,10 @@
 
 This package provides a web app and API for interacting with abstract 'resource' objects
 in a multi-user software environment. The frontend stack is Django, however any backend
-WSGI/ASGI server and database may be configured. When ran in development mode using the
-`manage.py` script, a basic Django server and SQLite database are instantiated, and any
-code changes will take effect immediately.
+WSGI/ASGI server and database may be used. A few helper scripts are provided:
+
+- `resource-manager-manage`: an interface to manage the database and run a test server
+- `resource-manager-run-gunicorn`: run a production server with gunicorn
 
 Follow the instructions below to quickly set up a development instance.
 
@@ -66,7 +67,7 @@ One can also register a user using the below command, and login by pointing a we
 `http://127.0.0.1:8000/accounts/login/`.
 
 ``` bash
-python manage.py createsuperuser
+resource-manager-manage createsuperuser
 ```
 
 One may also use this user to modify and administrate the database directly via
