@@ -182,6 +182,7 @@ def request_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse(
             {
                 "message": message,
+                "taken": [],
                 "missing": list(missing_names),
                 "already_owned": list(existing_owned_names),
             },
@@ -195,15 +196,20 @@ def request_resource(request: HttpRequest) -> JsonResponse:
         resource.session_name = session_name
         resource.save()
 
-    # Report taken, missing and already-owned resources.
-    message = f"{len(existing_names)} resources taken."
+    # Report results.
+    message = ""
+    if existing_names:
+        message += f"{len(existing_names)} resources taken. "
     if missing_names:
-        message += f" {len(missing_names)} missing resources skipped."
+        message += f"{len(missing_names)} missing resources skipped. "
+    message = message.strip()
 
     return JsonResponse(
         {
             "message": message,
+            "taken": list(existing_names),
             "missing": list(missing_names),
+            "already_owned": [],
         },
         status=200,
     )

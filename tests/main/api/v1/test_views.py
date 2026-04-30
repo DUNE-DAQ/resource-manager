@@ -316,7 +316,9 @@ class TestRequestResource:
 
         assert response.status_code == 200
         assert payload["message"] == "2 resources taken."
+        assert set(payload["taken"]) == {"alpha", "beta"}
         assert set(payload["missing"]) == set()
+        assert set(payload["already_owned"]) == set()
 
         alpha = Resource.objects.get(name="alpha")
         assert alpha.owner == "batman"
@@ -347,7 +349,9 @@ class TestRequestResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources taken. 1 missing resources skipped."
+        assert set(payload["taken"]) == {"alpha"}
         assert set(payload["missing"]) == {"beta"}
+        assert set(payload["already_owned"]) == set()
 
     def test_fails_on_already_owned_resources(self):
         """Test that any already-owned resources cause a failure."""
@@ -374,6 +378,7 @@ class TestRequestResource:
 
         assert response.status_code == 400
         assert payload["message"] == "1 or more resources are already owned. Aborting."
+        assert set(payload["taken"]) == set()
         assert set(payload["missing"]) == set()
         assert set(payload["already_owned"]) == {"alpha"}
 
