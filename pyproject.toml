@@ -44,10 +44,6 @@ mypy_path = ["src"]
 plugins = ["mypy_django_plugin.main"]
 exclude = [".*/migrations/.*"]
 
-[[tool.mypy.overrides]]
-module = "tests.*"
-ignore_errors = true
-
 [tool.django-stubs]
 django_settings_module = "resource_manager.settings"
 
