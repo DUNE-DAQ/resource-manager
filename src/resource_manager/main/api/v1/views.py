@@ -253,16 +253,20 @@ def release_resource(request: HttpRequest) -> JsonResponse:
         else:
             existing_not_owned_names.add(resource.name)
 
-    # Report released, missing and already-owned resources.
-    message = f"{len(existing_owned_names)} resources released."
+    # Report results.
+    message = ""
+    if existing_owned_names:
+        message += f"{len(existing_owned_names)} resources released. "
     if missing_names:
-        message += f" {len(missing_names)} missing resources skipped."
+        message += f"{len(missing_names)} missing resources skipped. "
     if existing_not_owned_names:
-        message += f" {len(existing_not_owned_names)} unowned resources skipped."
+        message += f"{len(existing_not_owned_names)} unowned resources skipped. "
+    message = message.strip()
 
     return JsonResponse(
         {
             "message": message,
+            "released": list(existing_owned_names),
             "missing": list(missing_names),
             "not_owned": list(existing_not_owned_names),
         },

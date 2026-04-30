@@ -459,6 +459,7 @@ class TestReleaseResource:
 
         assert response.status_code == 200
         assert payload["message"] == "2 resources released."
+        assert set(payload["released"]) == {"alpha", "beta"}
         assert set(payload["missing"]) == set()
         assert set(payload["not_owned"]) == set()
 
@@ -494,6 +495,7 @@ class TestReleaseResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources released. 1 missing resources skipped."
+        assert set(payload["released"]) == {"alpha"}
         assert set(payload["missing"]) == {"beta"}
         assert set(payload["not_owned"]) == set()
 
@@ -526,5 +528,6 @@ class TestReleaseResource:
 
         assert response.status_code == 200
         assert payload["message"] == "1 resources released. 2 unowned resources skipped."
+        assert set(payload["released"]) == {"alpha"}
         assert set(payload["missing"]) == set()
         assert set(payload["not_owned"]) == {"beta", "gamma"}
