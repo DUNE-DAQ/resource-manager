@@ -53,7 +53,8 @@ class TestAddResource:
 
         assert response.status_code == 201
         assert payload["message"] == "3 resources added."
-        assert payload["duplicated"] == []
+        assert set(payload["added"]) == {"alpha", "beta", "gamma"}
+        assert set(payload["duplicate"]) == set()
         assert set(Resource.objects.values_list("name", flat=True)) == {
             "alpha",
             "beta",
@@ -74,7 +75,8 @@ class TestAddResource:
 
         assert response.status_code == 201
         assert payload["message"] == "2 resources added. 1 duplicate resources skipped."
-        assert set(payload["duplicated"]) == {"beta"}
+        assert set(payload["added"]) == {"alpha", "gamma"}
+        assert set(payload["duplicate"]) == {"beta"}
         assert set(Resource.objects.values_list("name", flat=True)) == {
             "alpha",
             "beta",

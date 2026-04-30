@@ -25,19 +25,21 @@ def add_resource(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"message": message}, status=400)
 
     # Find duplicate resources.
-    bad_name_query = Resource.objects.filter(name__in=names)
-    duplicated = set(bad_name_query.values_list("name", flat=True))
+    duplicate = Resource.objects.filter(name__in=names)
+    duplicate_names = set(duplicate.values_list("name", flat=True))
 
     # Create new resources, skipping duplicates.
-    added_names = [n for n in names if n not in duplicated]
+    added_names = [n for n in names if n not in duplicate_names]
     Resource.objects.bulk_create([Resource(name=n) for n in added_names])
 
     # Report added and already-existing resources.
     message = f"{len(added_names)} resources added."
-    if duplicated:
-        message += f" {len(duplicated)} duplicate resources skipped."
+    if duplicate_names:
+        message += f" {len(duplicate_names)} duplicate resources skipped."
 
-    return JsonResponse({"message": message, "duplicated": list(duplicated)}, status=201)
+    return JsonResponse(
+        {"message": message, "added": added_names, "duplicate": list(duplicate_names)}, status=201
+    )
 
 
 def remove_resource(request: HttpRequest) -> JsonResponse:
