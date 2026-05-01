@@ -26,9 +26,9 @@ def index(request: HttpRequest) -> HttpResponse:
     for res in all_resources:
         message += (
             f"Name: '{res.name}', "
-            f"Owner: '{res.owner}', "
             f"Session ID: '{res.session_id}', "
-            f"Session Name: '{res.session_name}'</br>"
+            f"Session Name: '{res.session_name}', "
+            f"User Name: '{res.user_name}'</br>"
         )
 
     return HttpResponse(message)

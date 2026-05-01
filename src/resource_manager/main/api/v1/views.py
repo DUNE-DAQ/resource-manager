@@ -70,7 +70,7 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
     missing_names = names - existing_names
 
     # Find owned and unowned resources.
-    existing_not_owned = existing.filter(owner__isnull=True)
+    existing_not_owned = existing.filter(user_name__isnull=True)
     existing_not_owned_names = set(existing_not_owned.values_list("name", flat=True))
     existing_owned_names = existing_names - existing_not_owned_names
 
@@ -126,9 +126,9 @@ def query_resource(request: HttpRequest) -> JsonResponse:
     queries = [
         {
             "name": r.name,
-            "owner": r.owner,
             "session_id": r.session_id,
             "session_name": r.session_name,
+            "user_name": r.user_name,
         }
         for r in existing
     ]
@@ -151,7 +151,7 @@ def request_resource(request: HttpRequest) -> JsonResponse:
     """Request ownership of resources in the database.
 
     Args:
-        request: HTTP POST request containing resource names, owner, session_name, session_id.
+        request: HTTP POST request containing resource names, session_id, session_name, user_name.
 
     Returns:
         JSON response containing a status message and any failures.
@@ -162,9 +162,9 @@ def request_resource(request: HttpRequest) -> JsonResponse:
 
     try:
         names = {n.strip() for n in request.POST["names"].split(",")}
-        owner = request.POST["owner"].strip()
         session_id = request.POST["session_id"].strip()
         session_name = request.POST["session_name"].strip()
+        user_name = request.POST["user_name"].strip()
     except KeyError as e:
         message = f"Missing required argument '{e.args[0]}'."
         return JsonResponse({"message": message}, status=400)
@@ -175,7 +175,7 @@ def request_resource(request: HttpRequest) -> JsonResponse:
     missing_names = names - existing_names
 
     # Fail early if any existing resources are already owned.
-    existing_owned = existing.filter(owner__isnull=False)
+    existing_owned = existing.filter(user_name__isnull=False)
     if existing_owned.exists():
         existing_owned_names = set(existing_owned.values_list("name", flat=True))
         message = "1 or more resources are already owned. Aborting."
@@ -191,9 +191,9 @@ def request_resource(request: HttpRequest) -> JsonResponse:
 
     # Take ownership of existing resources that are not owned.
     for resource in existing:
-        resource.owner = owner
         resource.session_id = session_id
         resource.session_name = session_name
+        resource.user_name = user_name
         resource.save()
 
     # Report results.
@@ -219,7 +219,7 @@ def release_resource(request: HttpRequest) -> JsonResponse:
     """Release ownership of resources in the database.
 
     Args:
-        request: HTTP POST request containing resource names and owner.
+        request: HTTP POST request containing resource names and user name.
 
     Returns:
         JSON response containing a status message and any failures.
@@ -230,7 +230,7 @@ def release_resource(request: HttpRequest) -> JsonResponse:
 
     try:
         names = {n.strip() for n in request.POST["names"].split(",")}
-        owner = request.POST["owner"].strip()
+        user_name = request.POST["user_name"].strip()
     except KeyError as e:
         message = f"Missing required argument '{e.args[0]}'."
         return JsonResponse({"message": message}, status=400)
@@ -240,15 +240,15 @@ def release_resource(request: HttpRequest) -> JsonResponse:
     existing_names = set(existing.values_list("name", flat=True))
     missing_names = names - existing_names
 
-    # Release ownership of existing resources that are owned by <owner>.
+    # Release ownership of existing resources that are owned by <user_name>.
     existing_not_owned_names = set()
     existing_owned_names = set()
     for resource in existing:
-        if resource.owner == owner:
+        if resource.user_name == user_name:
             existing_owned_names.add(resource.name)
-            resource.owner = None
             resource.session_id = None
             resource.session_name = None
+            resource.user_name = None
             resource.save()
         else:
             existing_not_owned_names.add(resource.name)

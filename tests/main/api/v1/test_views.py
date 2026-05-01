@@ -151,7 +151,7 @@ class TestRemoveResource:
 
     def test_skips_owned_resources(self):
         """Test that owned resources are skipped and reported as already-owned."""
-        Resource.objects.create(name="alpha", owner="batman")
+        Resource.objects.create(name="alpha", user_name="batman")
         Resource.objects.create(name="beta")
 
         request = RequestFactory().post(
@@ -167,7 +167,7 @@ class TestRemoveResource:
         assert set(payload["removed"]) == {"beta"}
         assert set(payload["missing"]) == set()
         assert set(payload["already_owned"]) == {"alpha"}
-        assert Resource.objects.filter(name="alpha", owner="batman").exists()
+        assert Resource.objects.filter(name="alpha", user_name="batman").exists()
         assert not Resource.objects.filter(name="beta").exists()
 
 
@@ -201,15 +201,15 @@ class TestQueryResource:
         """Test that existing resources are queried and returned in the response."""
         Resource.objects.create(
             name="alpha",
-            owner="batman",
             session_id=None,
             session_name=None,
+            user_name="batman",
         )
         Resource.objects.create(
             name="beta",
-            owner="alice",
             session_id="s2",
             session_name="session two",
+            user_name="robin",
         )
 
         request = RequestFactory().post(
@@ -227,15 +227,15 @@ class TestQueryResource:
         assert results_by_name == {
             "alpha": {
                 "name": "alpha",
-                "owner": "batman",
                 "session_id": None,
                 "session_name": None,
+                "user_name": "batman",
             },
             "beta": {
                 "name": "beta",
-                "owner": "alice",
                 "session_id": "s2",
                 "session_name": "session two",
+                "user_name": "robin",
             },
         }
 
@@ -273,12 +273,12 @@ class TestRequestResource:
 
     def test_requires_all_arguments(self):
         """Test that all arguments are required."""
-        args = ["names", "owner", "session_id", "session_name"]
+        args = ["names", "session_id", "session_name", "user_name"]
         data = {
             "names": "alpha",
-            "owner": "batman",
             "session_id": "s1",
             "session_name": "session one",
+            "user_name": "batman",
         }
 
         for missing_arg in args:
@@ -305,9 +305,9 @@ class TestRequestResource:
             "/request-resource/",
             data={
                 "names": "alpha,beta",
-                "owner": "batman",
                 "session_id": "s1",
                 "session_name": "session one",
+                "user_name": "batman",
             },
         )
 
@@ -321,14 +321,14 @@ class TestRequestResource:
         assert set(payload["already_owned"]) == set()
 
         alpha = Resource.objects.get(name="alpha")
-        assert alpha.owner == "batman"
         assert alpha.session_id == "s1"
         assert alpha.session_name == "session one"
+        assert alpha.user_name == "batman"
 
         beta = Resource.objects.get(name="beta")
-        assert beta.owner == "batman"
         assert beta.session_id == "s1"
         assert beta.session_name == "session one"
+        assert beta.user_name == "batman"
 
     def test_skips_missing_resources(self):
         """Test that missing resources are skipped and reported as missing."""
@@ -338,9 +338,9 @@ class TestRequestResource:
             "/request-resource/",
             data={
                 "names": "alpha,beta",
-                "owner": "batman",
                 "session_id": "s1",
                 "session_name": "session one",
+                "user_name": "batman",
             },
         )
 
@@ -357,9 +357,9 @@ class TestRequestResource:
         """Test that any already-owned resources cause a failure."""
         Resource.objects.create(
             name="alpha",
-            owner="alice",
             session_id="old-sid",
             session_name="old session",
+            user_name="robin",
         )
         Resource.objects.create(name="beta")
 
@@ -367,9 +367,9 @@ class TestRequestResource:
             "/request-resource/",
             data={
                 "names": "alpha,beta",
-                "owner": "batman",
                 "session_id": "new-sid",
                 "session_name": "new session",
+                "user_name": "batman",
             },
         )
 
@@ -383,14 +383,14 @@ class TestRequestResource:
         assert set(payload["already_owned"]) == {"alpha"}
 
         alpha = Resource.objects.get(name="alpha")
-        assert alpha.owner == "alice"
         assert alpha.session_id == "old-sid"
         assert alpha.session_name == "old session"
+        assert alpha.user_name == "robin"
 
         beta = Resource.objects.get(name="beta")
-        assert beta.owner is None
         assert beta.session_id is None
         assert beta.session_name is None
+        assert beta.user_name is None
 
 
 @pytest.mark.django_db
@@ -410,10 +410,10 @@ class TestReleaseResource:
 
     def test_requires_all_arguments(self):
         """Test that all arguments are required."""
-        args = ["names", "owner"]
+        args = ["names", "user_name"]
         data = {
             "names": "alpha",
-            "owner": "batman",
+            "user_name": "batman",
         }
 
         for missing_arg in args:
@@ -432,25 +432,25 @@ class TestReleaseResource:
             assert Resource.objects.count() == 0
 
     def test_releases_owned_resources(self):
-        """Test that resources owned by the given owner are released."""
+        """Test that resources owned by the given user name are released."""
         Resource.objects.create(
             name="alpha",
-            owner="batman",
             session_id="s1",
             session_name="session one",
+            user_name="batman",
         )
         Resource.objects.create(
             name="beta",
-            owner="batman",
             session_id="s2",
             session_name="session two",
+            user_name="batman",
         )
 
         request = RequestFactory().post(
             "/release-resource/",
             data={
                 "names": "alpha,beta",
-                "owner": "batman",
+                "user_name": "batman",
             },
         )
 
@@ -464,29 +464,29 @@ class TestReleaseResource:
         assert set(payload["not_owned"]) == set()
 
         alpha = Resource.objects.get(name="alpha")
-        assert alpha.owner is None
         assert alpha.session_id is None
         assert alpha.session_name is None
+        assert alpha.user_name is None
 
         beta = Resource.objects.get(name="beta")
-        assert beta.owner is None
         assert beta.session_id is None
         assert beta.session_name is None
+        assert beta.user_name is None
 
     def test_skips_missing_resources(self):
         """Test that missing resources are skipped and reported as missing."""
         Resource.objects.create(
             name="alpha",
-            owner="batman",
             session_id="s1",
             session_name="session one",
+            user_name="batman",
         )
 
         request = RequestFactory().post(
             "/release-resource/",
             data={
                 "names": "alpha,beta",
-                "owner": "batman",
+                "user_name": "batman",
             },
         )
 
@@ -503,15 +503,15 @@ class TestReleaseResource:
         """Test that not-owned resources are skipped and reported as not-owned."""
         Resource.objects.create(
             name="alpha",
-            owner="batman",
             session_id="s1",
             session_name="session one",
+            user_name="batman",
         )
         Resource.objects.create(
             name="beta",
-            owner="alice",
-            session_id="a1",
-            session_name="alice_session",
+            session_id="s1",
+            session_name="session one",
+            user_name="robin",
         )
         Resource.objects.create(name="gamma")
 
@@ -519,7 +519,7 @@ class TestReleaseResource:
             "/release-resource/",
             data={
                 "names": "alpha,beta,gamma",
-                "owner": "batman",
+                "user_name": "batman",
             },
         )
 
