@@ -70,7 +70,7 @@ def remove_resource(request: HttpRequest) -> JsonResponse:
     missing_names = names - existing_names
 
     # Find owned and unowned resources.
-    existing_not_owned = existing.filter(user_name__isnull=True)
+    existing_not_owned = existing.filter(session_id__isnull=True)
     existing_not_owned_names = set(existing_not_owned.values_list("name", flat=True))
     existing_owned_names = existing_names - existing_not_owned_names
 
@@ -175,7 +175,7 @@ def request_resource(request: HttpRequest) -> JsonResponse:
     missing_names = names - existing_names
 
     # Fail early if any existing resources are already owned.
-    existing_owned = existing.filter(user_name__isnull=False)
+    existing_owned = existing.filter(session_id__isnull=False)
     if existing_owned.exists():
         existing_owned_names = set(existing_owned.values_list("name", flat=True))
         message = "1 or more resources are already owned. Aborting."
@@ -219,7 +219,7 @@ def release_resource(request: HttpRequest) -> JsonResponse:
     """Release ownership of resources in the database.
 
     Args:
-        request: HTTP POST request containing resource names and user name.
+        request: HTTP POST request containing resource names and session ID.
 
     Returns:
         JSON response containing a status message and any failures.
@@ -230,7 +230,7 @@ def release_resource(request: HttpRequest) -> JsonResponse:
 
     try:
         names = {n.strip() for n in request.POST["names"].split(",")}
-        user_name = request.POST["user_name"].strip()
+        session_id = request.POST["session_id"].strip()
     except KeyError as e:
         message = f"Missing required argument '{e.args[0]}'."
         return JsonResponse({"message": message}, status=400)
@@ -240,11 +240,11 @@ def release_resource(request: HttpRequest) -> JsonResponse:
     existing_names = set(existing.values_list("name", flat=True))
     missing_names = names - existing_names
 
-    # Release ownership of existing resources that are owned by <user_name>.
+    # Release ownership of existing resources that are owned by <session_id>.
     existing_not_owned_names = set()
     existing_owned_names = set()
     for resource in existing:
-        if resource.user_name == user_name:
+        if resource.session_id == session_id:
             existing_owned_names.add(resource.name)
             resource.session_id = None
             resource.session_name = None

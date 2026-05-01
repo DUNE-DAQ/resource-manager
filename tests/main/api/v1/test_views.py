@@ -151,7 +151,7 @@ class TestRemoveResource:
 
     def test_skips_owned_resources(self):
         """Test that owned resources are skipped and reported as already-owned."""
-        Resource.objects.create(name="alpha", user_name="batman")
+        Resource.objects.create(name="alpha", session_id="s1")
         Resource.objects.create(name="beta")
 
         request = RequestFactory().post(
@@ -167,7 +167,7 @@ class TestRemoveResource:
         assert set(payload["removed"]) == {"beta"}
         assert set(payload["missing"]) == set()
         assert set(payload["already_owned"]) == {"alpha"}
-        assert Resource.objects.filter(name="alpha", user_name="batman").exists()
+        assert Resource.objects.filter(name="alpha", session_id="s1").exists()
         assert not Resource.objects.filter(name="beta").exists()
 
 
@@ -357,7 +357,7 @@ class TestRequestResource:
         """Test that any already-owned resources cause a failure."""
         Resource.objects.create(
             name="alpha",
-            session_id="old-sid",
+            session_id="old_sid",
             session_name="old session",
             user_name="robin",
         )
@@ -367,7 +367,7 @@ class TestRequestResource:
             "/request-resource/",
             data={
                 "names": "alpha,beta",
-                "session_id": "new-sid",
+                "session_id": "new_sid",
                 "session_name": "new session",
                 "user_name": "batman",
             },
@@ -383,7 +383,7 @@ class TestRequestResource:
         assert set(payload["already_owned"]) == {"alpha"}
 
         alpha = Resource.objects.get(name="alpha")
-        assert alpha.session_id == "old-sid"
+        assert alpha.session_id == "old_sid"
         assert alpha.session_name == "old session"
         assert alpha.user_name == "robin"
 
@@ -410,10 +410,10 @@ class TestReleaseResource:
 
     def test_requires_all_arguments(self):
         """Test that all arguments are required."""
-        args = ["names", "user_name"]
+        args = ["names", "session_id"]
         data = {
             "names": "alpha",
-            "user_name": "batman",
+            "session_id": "s1",
         }
 
         for missing_arg in args:
@@ -441,16 +441,16 @@ class TestReleaseResource:
         )
         Resource.objects.create(
             name="beta",
-            session_id="s2",
-            session_name="session two",
-            user_name="batman",
+            session_id="s1",
+            session_name="session one",
+            user_name="robin",
         )
 
         request = RequestFactory().post(
             "/release-resource/",
             data={
                 "names": "alpha,beta",
-                "user_name": "batman",
+                "session_id": "s1",
             },
         )
 
@@ -486,7 +486,7 @@ class TestReleaseResource:
             "/release-resource/",
             data={
                 "names": "alpha,beta",
-                "user_name": "batman",
+                "session_id": "s1",
             },
         )
 
@@ -509,9 +509,9 @@ class TestReleaseResource:
         )
         Resource.objects.create(
             name="beta",
-            session_id="s1",
-            session_name="session one",
-            user_name="robin",
+            session_id="s2",
+            session_name="session two",
+            user_name="batman",
         )
         Resource.objects.create(name="gamma")
 
@@ -519,7 +519,7 @@ class TestReleaseResource:
             "/release-resource/",
             data={
                 "names": "alpha,beta,gamma",
-                "user_name": "batman",
+                "session_id": "s1",
             },
         )
 

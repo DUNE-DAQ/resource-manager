@@ -47,12 +47,15 @@ curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" \
 
 # Request control.
 curl -k -X POST "http://127.0.0.1:8000/api/request_resource/" \
--d "names=resource_1,resource_2" -d "user_name=${USER}" \
--d "session_id=session_1" -d "session_name=my_session"
+-d "names=resource_1,resource_2" \
+-d "session_id=s1" \
+-d "session_name=session_1" \
+-d "user_name=${USER}"
 
 # Release one.
 curl -k -X POST "http://127.0.0.1:8000/api/release_resource/" \
--d "names=resource_1" -d "user_name=${USER}"
+-d "names=resource_1" \
+-d "session_id=s1"
 
 # Remove one.
 curl -k -X POST "http://127.0.0.1:8000/api/remove_resource/" \
