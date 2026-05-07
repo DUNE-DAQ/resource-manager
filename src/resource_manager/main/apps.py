@@ -7,4 +7,4 @@ class MainConfig(AppConfig):
     """Configuration for the main resource manager app."""
 
     default_auto_field = "django.db.models.BigAutoField"
-    name = "main"
+    name = "resource_manager.main"

@@ -1,6 +1,60 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resource-manager"
+description = "DUNE-DAQ Resource Manager"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "django>=5.2",
+  "gunicorn>=23.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "pytest>=8.4",
+  "pytest-cov>=6.2.1",
+  "pytest-mypy>=1.0.1",
+  "pytest-django>=4.11.1",
+  "pre-commit>=4.3.0",
+  "ruff>=0.12.11",
+  "djlint>=1.36.4",
+  "django-stubs[compatible-mypy]>=5.2",
+  "types-gunicorn>=23.0"
+]
+
+[project.scripts]
+resource-manager-manage = "resource_manager.cli:manage"
+resource-manager-run-gunicorn = "resource_manager.cli:run_gunicorn"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["resource_manager*"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = ["src"]
+plugins = ["mypy_django_plugin.main"]
+exclude = [".*/migrations/.*"]
+
+[tool.django-stubs]
+django_settings_module = "resource_manager.settings"
+
+[tool.djlint]
+profile = "django"
+indent = 2
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+exclude = ["**/migrations/**"]
 
 [tool.ruff.lint]
 select = [
@@ -11,22 +65,16 @@ select = [
     "UP",   # pyupgrade
     "RUF",  # ruff
 ]
-pydocstyle.convention = "google"
 
-[tool.djlint]
-profile = "django"
-indent = 2
-
-[tool.django-stubs]
-django_settings_module = "resource_manager.settings"
-
-[tool.mypy]
-plugins = ["mypy_django_plugin.main"]
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.pytest.ini_options]
-addopts = "-v --mypy --cov=. --cov-report=html"
+testpaths = ["tests"]
+addopts = "-v --mypy --cov --cov-report=html"
 DJANGO_SETTINGS_MODULE = "resource_manager.settings"
 FAIL_INVALID_TEMPLATE_VARS = true
 
 [tool.coverage.run]
-omit = ["manage.py", "resource_manager/*", "tests/*"]
+source = ["src/resource_manager"]
+omit = ["*/migrations/*"]

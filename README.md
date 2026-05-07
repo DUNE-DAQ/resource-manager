@@ -1,44 +1,77 @@
-# TLDR Setup
+# DUNE-DAQ Resource Manager
+
+This package provides a web app and API for interacting with abstract 'resource' objects
+in a multi-user software environment. The frontend stack is Django, however any backend
+WSGI/ASGI server and database may be used. A few helper scripts are provided:
+
+- `resource-manager-manage`: an interface to manage the database and run a test server
+- `resource-manager-run-gunicorn`: run a production server with gunicorn
+
+Follow the instructions below to quickly set up a development instance.
+
+## TLDR Setup
 
 At any point once the server is started, see a summary of resource allocations by
 pointing a web browser at `http://127.0.0.1:8000/`.
 
 ```bash
-# Set up a Python environment.
+# Set up a Python environment:
 python -m venv .venv
 . .venv/bin/activate
 pip install -U pip
 
-# Either requirements.txt for production:
-pip install -r requirements.txt
+# Either install for production:
+pip install .
 
-# Or requirements-dev.txt for devopment:
-pip install -r requirements-dev.txt
+# Or install for devopment:
+pip install -e .[dev]
 
-# Set up the configured database.
-python manage.py makemigrations
-python manage.py migrate
+# Set up the database:
+resource-manager-manage migrate
 
-# Start a local test server.
-python manage.py runserver
+# Either start a local test server:
+resource-manager-manage runserver
 
+# Or start a gunicorn server:
+resource-manager-run-gunicorn
+```
+
+Interact with the API using a HTTP client capable of the `POST` method, such as `curl`.
+One can either access the latest API version at `http://127.0.0.1:8000/api/`, or access
+e.g. API version `v1` at `http://127.0.0.1:8000/api/v1/`.
+
+```bash
 # Add some resources.
-curl -k -X POST "http://127.0.0.1:8000/add_resource/" -d "resource_name=resource_one"
-curl -k -X POST "http://127.0.0.1:8000/add_resource/" -d "resource_name=resource_two"
+curl -k -X POST "http://127.0.0.1:8000/api/add_resource/" \
+-d "names=resource_1,resource_2"
 
-# Take control.
-curl -k -X POST "http://127.0.0.1:8000/take_resource/" -d "resource_name=resource_one"
-curl -k -X POST "http://127.0.0.1:8000/take_resource/" -d "resource_name=resource_two"
+# Request control.
+curl -k -X POST "http://127.0.0.1:8000/api/request_resource/" \
+-d "names=resource_1,resource_2" \
+-d "session_id=s1" \
+-d "session_name=session_1" \
+-d "user_name=${USER}"
 
 # Release one.
-curl -k -X POST "http://127.0.0.1:8000/release_resource/" -d "resource_name=resource_one"
+curl -k -X POST "http://127.0.0.1:8000/api/release_resource/" \
+-d "names=resource_1" \
+-d "session_id=s1"
 
-# Query ownership of the other.
-curl -k -X POST "http://127.0.0.1:8000/query_resource/" -d "resource_name=resource_two"
+# Remove one.
+curl -k -X POST "http://127.0.0.1:8000/api/remove_resource/" \
+-d "names=resource_1"
+
+# Query the other.
+curl -k -X POST "http://127.0.0.1:8000/api/query_resource/" \
+-d "names=resource_2"
 ```
 
-One can also register a user using the below command, and login by pointing a web at `http://127.0.0.1:8000/accounts/login/`, although this currently doesn't do anything.
+One can also register a user using the below command, and login by pointing a web at
+`http://127.0.0.1:8000/accounts/login/`.
 
 ``` bash
-python manage.py createsuperuser
+resource-manager-manage createsuperuser
 ```
+
+One may also use this user to modify and administrate the database directly via
+`http://127.0.0.1:8000/admin/`.
